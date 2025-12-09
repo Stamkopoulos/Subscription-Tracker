@@ -17,22 +17,33 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(arcjetMiddleware);
 
+// Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
-
-app.use(errorMiddleware);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Subscription Tracker API!");
 });
 
-app.listen(PORT, async () => {
-  console.log(
-    `Subscription Tracker API is running on http://localhost:${PORT}`
-  );
+// ✅ Error middleware comes **after routes**
+app.use(errorMiddleware);
 
-  await connectToDatabase();
-});
+// ✅ Start server after DB connection
+const startServer = async () => {
+  try {
+    await connectToDatabase();
+    app.listen(PORT, () => {
+      console.log(
+        `Subscription Tracker API running on http://localhost:${PORT}`
+      );
+    });
+  } catch (err) {
+    console.error("Failed to connect to database:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
